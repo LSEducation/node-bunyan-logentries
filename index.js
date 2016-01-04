@@ -38,7 +38,11 @@ LBS.write = function (rec) {
   if (!rec) throw new Error('nothing passed to log');
   if (!this.writable) throw new Error('failed to write to a closed stream');
   if ('function' === typeof this.transform) rec = this.transform(rec);
-  this._logger.log(this._resolveLevel(rec.level), rec);
+  try {
+    this._logger.log(this._resolveLevel(rec.level), rec);
+  } catch (err) {
+    console.error('Error: ', err.stack);
+  }
 };
 
 LBS.end = function (rec) {
