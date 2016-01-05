@@ -18,6 +18,7 @@ exports.createStream = function (config, options) {
  * @param {String} config.token
  * @param {Function} [config.transform] transforms every log
  * @param {String} [config.defaultLevel] (defaults to `info`)
+ * @param {Boolean} [config.failOnError] (defaults to true)
  */
 
 function LogentriesBunyanStream(config, options) {
@@ -27,6 +28,7 @@ function LogentriesBunyanStream(config, options) {
   this.transform = options && options.transform;
   this.defaultLevel = options && options.defaultLevel || 'info';
   this.writable = true;
+  this.failOnError = config && config.failOnError;
 
   config.levels = config.levels || ['debug', 'info', 'notice', 'warning', 'err', 'crit', 'alert', 'emerg'];
   this._logger = new logentries(config);
@@ -44,6 +46,7 @@ LBS.write = function (rec) {
   } catch (err) {
     if (err instanceof _logentriesError.LogentriesError) {
       console.error(err);
+      if (this.failOnError === undefined || this.failOnError) { process.exit(1); }
     }
     else {
       // cannot handle this exception, so rethrow
