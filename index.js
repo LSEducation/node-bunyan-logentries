@@ -1,6 +1,7 @@
 'use strict';
 
 var logentries = require('le_node'),
+  _logentriesError = require('le_node/lib/node_modules/error'),
   Stream = require('stream').Stream,
   util = require('util'),
   LBS;
@@ -41,7 +42,13 @@ LBS.write = function (rec) {
   try {
     this._logger.log(this._resolveLevel(rec.level), rec);
   } catch (err) {
-    console.error('Error: ', err.stack);
+    if (err instanceof _logentriesError.LogentriesError) {
+      console.error(err);
+    }
+    else {
+      // cannot handle this exception, so rethrow
+      throw err;
+    }
   }
 };
 
