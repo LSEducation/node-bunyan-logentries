@@ -46,7 +46,7 @@ LBS.write = function (rec) {
   } catch (err) {
     if (err instanceof _logentriesError.LogentriesError) {
       console.error(err);
-      if (this.failOnError === undefined || this.failOnError) { process.exit(1); }
+      if (this.failOnError === undefined || this.failOnError) { throw err; }
     }
     else {
       // cannot handle this exception, so rethrow
