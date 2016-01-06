@@ -1,6 +1,7 @@
 'use strict';
 
 var logentries = require('le_node'),
+  _logentriesError = require('le_node/lib/node_modules/error'),
   Stream = require('stream').Stream,
   util = require('util'),
   LBS;
@@ -17,6 +18,7 @@ exports.createStream = function (config, options) {
  * @param {String} config.token
  * @param {Function} [config.transform] transforms every log
  * @param {String} [config.defaultLevel] (defaults to `info`)
+ * @param {Boolean} [config.failOnError] (defaults to true)
  */
 
 function LogentriesBunyanStream(config, options) {
@@ -26,6 +28,7 @@ function LogentriesBunyanStream(config, options) {
   this.transform = options && options.transform;
   this.defaultLevel = options && options.defaultLevel || 'info';
   this.writable = true;
+  this.failOnError = config && config.failOnError;
 
   config.levels = config.levels || ['debug', 'info', 'notice', 'warning', 'err', 'crit', 'alert', 'emerg'];
   this._logger = new logentries(config);
@@ -38,7 +41,18 @@ LBS.write = function (rec) {
   if (!rec) throw new Error('nothing passed to log');
   if (!this.writable) throw new Error('failed to write to a closed stream');
   if ('function' === typeof this.transform) rec = this.transform(rec);
-  this._logger.log(this._resolveLevel(rec.level), rec);
+  try {
+    this._logger.log(this._resolveLevel(rec.level), rec);
+  } catch (err) {
+    if (err instanceof _logentriesError.LogentriesError) {
+      console.error(err);
+      if (this.failOnError === undefined || this.failOnError) { throw err; }
+    }
+    else {
+      // cannot handle this exception, so rethrow
+      throw err;
+    }
+  }
 };
 
 LBS.end = function (rec) {
